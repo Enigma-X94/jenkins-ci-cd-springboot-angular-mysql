@@ -14,4 +14,11 @@ This project showcases the implementation of a complete Continuous Integration a
 - **Artifact Management**: Nexus Repository
 
 ## 📂 Folder Structure
-<pre lang="markdown"><code> ```text . ├── backend/ # Spring Boot app ├── frontend/ # Angular app ├── jenkins/ # Jenkins pipeline stuff (Jenkinsfile, configs) ├── kubernetes/ # Deployment YAMLs (K8s) ├── terraform/ # All .tf files └── README.md ``` </code></pre>
+```text
+.
+├── backend/               # Spring Boot app
+├── frontend/              # Angular app
+├── jenkins/               # Jenkins pipeline stuff (Jenkinsfile, configs)
+├── kubernetes/            # Deployment YAMLs (K8s)
+├── terraform/             # All .tf files
+└── README.md
