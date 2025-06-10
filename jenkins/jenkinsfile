@@ -1,1 +1,133 @@
+pipeline {
+    agent any
+    tools{
+        jdk 'jdk-17'
+        maven 'Maven3'
+    }
+    environment {
+        SCANNER_HOME = tool 'sonar-scanner'
+        SPRING_PROFILES_ACTIVE = 'dev'
+    }
+    stages {
+        stage('Git Checkout') {
+            steps {
+              git branch: 'main', credentialsId: 'github-cred', url: 'https://github.com/Enigma-X94/SpringBoot_CrudFullStackApp.git'
+            }
+        }
+        stage('Starting MYSQL') {
+            steps {
+              sh '''
+              docker run -d --name mysql-test \
+                        -e MYSQL_ROOT_PASSWORD=root \
+                        -e MYSQL_DATABASE=employee_management_system \
+                        -e MYSQL_USER=dev \
+                        -e MYSQL_PASSWORD=root \
+                        -p 3306:3306 \
+                        mysql:8.0
+
+                    echo "Waiting for MySQL to initialize..."
+                    sleep 20
+              '''
+            }	
+		}
+        stage('Compile') {
+            steps {
+                dir('springtboot-backend') {
+                    sh 'mvn compile'
+                }
+            }
+        }
+        stage('Test') {
+            steps {
+                dir('springtboot-backend') {
+                    sh 'mvn test -Dspring.profiles.active=dev'
+                }
+            }
+        }
+        stage('Trivy Scan') {
+            steps {
+              sh 'trivy fs --format table -o fs.html .'
+            }
+        }
+        stage('SonarQube') {
+            steps {
+                withSonarQubeEnv('sonar-server') {
+                    sh '''$SCANNER_HOME/bin/sonar-scanner \
+                        -Dsonar.projectKey=EmployeeApp \
+                        -Dsonar.projectName=EmployeeApp \
+                        -Dsonar.sources=springtboot-backend/src/main/java \
+                        -Dsonar.java.binaries=springtboot-backend/target'''
+                }
+            }
+        }
+        stage('Build') {
+            steps {
+                dir('springtboot-backend') {
+                    sh "mvn package -DskipTests"
+                }
+            }
+        }
+        stage('Publish Artifact') {
+            steps {
+                dir('springtboot-backend') {
+                       withMaven(globalMavenSettingsConfig: 'maven-settings', jdk: 'jdk-17', maven: 'Maven3', mavenSettingsConfig: '', traceability: true) {
+                        sh "mvn deploy"
+                        }
+                    
+                }
+            }
+        }
+        stage('Docker Build Image and Tag') {
+            steps {
+                script {
+                    withDockerRegistry(credentialsId: 'docker-cred', toolName: 'docker') {
+                        dir('springtboot-backend') {
+                            sh "docker build -t thedevopsrookie/employeeapp:latest ."
+                        }
+                    }
+                }
+            }   
+        }
+        stage('Trivy Scan IMAGE') {
+            steps {
+              sh 'trivy image --format table -o image.html thedevopsrookie/employeeapp:latest'
+            }
+        }
+        stage('Docker Push Image') {
+            steps {
+                script {
+                    withDockerRegistry(credentialsId: 'docker-cred', toolName: 'docker') {
+                        dir('springtboot-backend') {
+                            sh "docker push thedevopsrookie/employeeapp:latest"
+                        }
+                    }
+                }
+            }   
+        }
+        stage('K8S Deploy') {
+            steps {
+                withKubeConfig(caCertificate: '', clusterName: 'kind-k8s', contextName: '', credentialsId: 'k8s-cred', namespace: 'webapps', restrictKubeConfigAccess: false, serverUrl: 'https://3.88.144.166:6443') {
+                    sh "kubectl apply -f deployment-service.yml"
+                    sleep 30
+                }
+            
+            }   
+        }
+       stage('Verify the deployment') {
+            steps {
+                withKubeConfig(caCertificate: '', clusterName: 'kind-k8s', contextName: '', credentialsId: 'k8s-cred', namespace: 'webapps', restrictKubeConfigAccess: false, serverUrl: 'https://3.88.144.166:6443') {
+                    sh "kubectl get pod"
+                    sh "kubectl get svc"
+                }
+            
+            }   
+        }
+    }
+    post {
+        always {
+            echo "Cleaning up..."
+            sh 'docker rm -f mysql-test || true'
+        }
+    }
+}
 
