@@ -5,7 +5,7 @@ This directory contains the Kubernetes manifest files for deploying the **Employ
 ## 🏗️ High-Level Architecture
 
 - **Application Name:** `employeeapp`
-- **Image:** Pulled from private DockerHub repo: `thedevopsrookie/employeeapp:latest`
+- **Image:** Pulled from private DockerHub repo: `cd/employeeapp:latest`
 - **Deployed as:** 2 replicas (Pods) behind a LoadBalancer service
 - **Namespace:** `webapps`
 - **Pull strategy:** `Always` (pull latest on every deploy)

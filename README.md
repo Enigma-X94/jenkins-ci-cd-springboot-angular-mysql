@@ -9,16 +9,21 @@ This project showcases the implementation of a complete Continuous Integration a
 - **Infra as Code**: Terraform (for AWS provisioning)
 - **Front & Backend**: Angular (client) + Spring Boot (REST API)
 - **Database**: MySQL
-- **Monitoring**: Prometheus, Grafana
-- **DNS/Domain**: GoDaddy (custom domain configuration)
 - **Artifact Management**: Nexus Repository
 
 ## 📂 Folder Structure
 ```text
 .
 ├── backend/               # Spring Boot app
+├── docs/                  # Screenshots
 ├── frontend/              # Angular app
 ├── jenkins/               # Jenkins pipeline stuff (Jenkinsfile, configs)
 ├── kubernetes/            # Deployment YAMLs (K8s)
 ├── terraform/             # All .tf files
 └── README.md
+```
+## 📂 Architecture
+
+This diagram represents the complete DevOps pipeline used in this project, from source code to production deployment on AWS EKS :
+
+<img src="docs/ci_cd_jenkins_pipeline_diagram.jpg" width="1000"/>
